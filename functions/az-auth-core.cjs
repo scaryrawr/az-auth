@@ -45,7 +45,7 @@ function help(manager, arg) {
 function classify(manager, args) {
   if (contains('pn rush-pnpm', manager)) manager = 'pnpm';
   const result = { manager, name: '', registry: false };
-  let action = '', rest = [], local = false;
+  let action = '', rest = [], local = false, packageOption = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--') {
@@ -56,7 +56,11 @@ function classify(manager, args) {
     if (help(manager, arg)) return result;
     if ((arg === '--no-install' && contains('npx bun', manager)) ||
         (manager === 'npx' && contains('--no --yes=false', arg))) local = true;
-    if (valueOption(manager, '', arg)) i++;
+    if (contains('npx pnpx', manager) && /^(?:--package|-p)=.+/.test(arg)) packageOption = true;
+    if (valueOption(manager, '', arg)) {
+      if (contains('npx pnpx', manager) && contains('--package -p', arg) && args[i + 1]) packageOption = true;
+      i++;
+    }
     else if (!arg.startsWith('-')) {
       action = arg;
       rest = args.slice(i + 1);
@@ -81,7 +85,7 @@ function classify(manager, args) {
   result.name = action;
   const runner = contains('npx pnpx', manager) || contains('dlx x', action);
   if (contains('npx pnpx', manager)) {
-    result.registry = args.length > 0;
+    result.registry = Boolean(action) || packageOption;
     rest = [];
   } else result.registry = contains(ACTIONS[manager], action) && action !== '';
   for (let i = 0; i < rest.length; i++) {
@@ -173,9 +177,17 @@ function readRegistry(config, format, file) {
 }
 
 function hasFeed(config) {
-  const normalized = value => value.replace(/^https?:/, '').replace(/\/+$/, '') + '/';
+  const normalized = value => {
+    try {
+      const url = new URL(value.startsWith('//') ? `https:${value}` : value);
+      if (!contains('http: https:', url.protocol) || url.username || url.password || url.search || url.hash) return null;
+      return `//${url.host}${url.pathname.replace(/\/+$/, '')}/`;
+    } catch { return null; }
+  };
   for (const [key, value] of config.entries) {
     if (!key.startsWith('registry:')) continue;
+    const registry = normalized(value);
+    if (!registry) continue;
     const context = key.slice(9);
     const token = config.entries.has(`token:${context}`) ? config.entries.get(`token:${context}`) : config.entries.get('token:default');
     if (token) return true;
@@ -183,7 +195,7 @@ function hasFeed(config) {
     for (const [auth, reference] of config.entries) {
       if (!auth.startsWith('auth:')) continue;
       const prefix = normalized(auth.slice(5));
-      if (normalized(value).startsWith(prefix) && prefix.length > specificity) {
+      if (prefix && registry.startsWith(prefix) && prefix.length >= specificity) {
         credential = reference;
         specificity = prefix.length;
       }
@@ -610,8 +622,10 @@ async function writeNpm(args, env) {
   if (exists(target) && fs.lstatSync(target).isSymbolicLink()) throw new Error('Project writer does not replace a symlinked user .npmrc. Update the target explicitly.');
   const old = readConfig(target), base = feed.replace(/\/+$/, '') + '/', content = entries(base);
   const current = old.replace(/\r\n/g, '\n').split('\n');
-  if (content.trim().split('\n').every(line => current.includes(line))) return 0;
   const keys = ['username', '_authToken', 'email'].map(key => `//${base}:${key}`);
+  const desired = content.trim().split('\n');
+  const matching = current.filter(line => keys.includes(line.split('=')[0].trim()));
+  if (desired.every(line => matching.includes(line)) && matching.every(line => desired.includes(line))) return 0;
   const kept = current.filter(line => !keys.includes(line.split('=')[0].trim()));
   if (kept.length !== current.length) {
     process.stderr.write('Update existing authentication entries in user .npmrc? [y/N] ');

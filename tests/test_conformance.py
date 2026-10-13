@@ -181,6 +181,20 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "npm", ["install"], True)
         (self.project / ".npmrc").unlink()
 
+    def test_option_only_runners_and_registry_url_case(self):
+        for shell in SHELLS:
+            for manager in ("npx", "pnpx"):
+                for args in (["--yes"], ["--registry=https://private.invalid/feed/"], ["--"]):
+                    with self.subTest(shell=shell, manager=manager, args=args):
+                        self.check(shell, manager, args, False)
+                for args in (["--package", "pkg"], ["--package=pkg"], ["-p", "pkg"]):
+                    self.check(shell, manager, args, True)
+            (self.project / ".npmrc").write_text("registry=HTTPS://PRIVATE.INVALID/feed/\n")
+            self.check(shell, "npm", ["install"], True)
+            (self.project / ".npmrc").write_text("registry=https://private.invalid/Feed/\n")
+            self.check(shell, "npm", ["install"], False)
+            (self.project / ".npmrc").unlink()
+
     def test_missing_node_and_manager_are_explicit(self):
         for shell in SHELLS:
             with self.subTest(shell=shell):
@@ -332,6 +346,14 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         before = (self.home / ".npmrc").read_bytes()
         self.assertEqual(write(["--from-project"]).returncode, 0)
+        self.assertEqual((self.home / ".npmrc").read_bytes(), before)
+        conflict = "//pkgs.dev.azure.com/org/_packaging/feed/npm/registry/:_authToken=stale\n"
+        (self.home / ".npmrc").write_bytes(before + conflict.encode())
+        result = write(["--from-project"], "n\n")
+        self.assertIn("Update existing", result.stderr)
+        self.assertEqual((self.home / ".npmrc").read_bytes(), before + conflict.encode())
+        result = write(["--from-project"], "y\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((self.home / ".npmrc").read_bytes(), before)
         (self.home / ".npmrc").write_text(before.decode().replace("VssSessionToken", "old-user"))
         before = (self.home / ".npmrc").read_bytes()

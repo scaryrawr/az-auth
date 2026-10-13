@@ -58,6 +58,7 @@ The independently specified regression matrix in `tests/test_wrappers.py` lists 
 
 With no action, `pnpm`, `pn`, and `yarn` use the install policy.
 Bare `npm`, `bun`, `npx`, `pnpx`, and `corepack` do not fetch a token.
+Option-only `npx` and `pnpx` invocations also skip authentication unless they explicitly request a package with `--package` or `-p`.
 Local `run`, `build`, `test`, `exec`, help, version, configuration, maintenance, and unknown actions do not fetch a token.
 For example, `npm run install` is local.
 
@@ -72,6 +73,7 @@ Unknown options with separate values remain outside this policy.
 Auth entries alone do not trigger token acquisition.
 The effective default registry or a configured scope must match a credential reference to `ARTIFACTS_ACCESSTOKEN`.
 URL path matching keeps `/feed/` distinct from `/feed-other/`.
+Registry schemes and hosts are case-insensitive; paths remain case-sensitive.
 An effective literal credential overrides an inherited placeholder reference at the same key.
 When several URL credentials match a registry, the longest path selects the effective credential.
 
