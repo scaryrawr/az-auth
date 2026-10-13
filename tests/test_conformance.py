@@ -427,6 +427,10 @@ class ConformanceTests(unittest.TestCase):
             self.check(shell, "dotnet", ["restore", "--source", "https://api.nuget.org/v3/index.json"], False)
             self.check(shell, "nuget", ["restore", "-Source", visual], True)
             self.check(shell, "dotnet", ["restore"], False, {"VSS_NUGET_ACCESSTOKEN": "reuse"}, "reuse")
+            self.check(shell, "dotnet", ["restore"], False,
+                       {"ARTIFACTS_ACCESSTOKEN": " \t ", "VSS_NUGET_ACCESSTOKEN": "reuse"}, "reuse")
+            self.check(shell, "nuget", ["restore"], False,
+                       {"ARTIFACTS_ACCESSTOKEN": " \t ", "VSS_NUGET_ACCESSTOKEN": "reuse"}, "reuse")
         config.write_text(f'<configuration><packageSources><add key="private" value="{feed}"/></packageSources>'
                           '<disabledPackageSources><add key="private" value="true"/></disabledPackageSources></configuration>')
         self.check("core", "dotnet", ["restore"], False)

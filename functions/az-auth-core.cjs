@@ -573,7 +573,8 @@ async function run(invocation, completion) {
       else if (config.placeholder && !Object.hasOwn(env, 'ARTIFACTS_ACCESSTOKEN')) decision = Decision.placeholder;
     }
     if (decision === Decision.token) {
-      const inherited = env.ARTIFACTS_ACCESSTOKEN || (sources.length ? env.VSS_NUGET_ACCESSTOKEN : '');
+      const inherited = env.ARTIFACTS_ACCESSTOKEN?.trim() ? env.ARTIFACTS_ACCESSTOKEN :
+        (sources.length ? env.VSS_NUGET_ACCESSTOKEN : '');
       const token = await acquireToken(env, inherited);
       overlay.ARTIFACTS_ACCESSTOKEN = token.value;
       if (sources.length) {
