@@ -114,6 +114,7 @@ Custom Rush commands, generated temporary configs, and Rush-specific environment
 `dotnet restore` and implicit-restore `build`, `test`, `run`, `pack`, and `publish` qualify unless `--no-restore` is supplied before `--`.
 `nuget restore`, `nuget install`, and `nuget update` qualify.
 Local information, help, version, and other actions do not inspect the credential provider or fetch tokens.
+Both managers recognize `-?` as a local help switch.
 
 Effective sources come from the user config and then ancestor configs, root to working directory.
 User config is `$APPDATA/NuGet/NuGet.Config` when `APPDATA` is set, otherwise `$HOME/.nuget/NuGet/NuGet.Config`.
@@ -131,6 +132,7 @@ Only actual HTTPS URLs at `pkgs.dev.azure.com` or a subdomain of `pkgs.visualstu
 Userinfo, query strings, and fragments do not qualify.
 An auth invocation requires `CredentialProvider.Microsoft.dll` for dotnet or `CredentialProvider.Microsoft.exe` for NuGet under `$HOME/.nuget/plugins`.
 Alternatively, `NUGET_PLUGIN_PATHS` can select an existing provider file.
+Separate multiple plugin paths with the platform path-list delimiter, `:` on Unix or `;` on Windows.
 This is a file-presence check, not a guarantee of provider compatibility or execution permissions.
 
 The child receives `VSS_NUGET_ACCESSTOKEN` and `VSS_NUGET_URI_PREFIXES` built from the effective Azure sources, plus `ARTIFACTS_ACCESSTOKEN`.

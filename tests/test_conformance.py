@@ -349,6 +349,21 @@ class ConformanceTests(unittest.TestCase):
                 with self.subTest(shell=shell, manager=manager, args=args):
                     self.check(shell, manager, args, auth)
 
+    def test_nuget_help_and_plugin_path_lists(self):
+        feed = "https://pkgs.dev.azure.com/org/_packaging/feed/nuget/v3/index.json"
+        (self.project / "NuGet.Config").write_text(
+            f'<configuration><packageSources><add key="private" value="{feed}"/></packageSources></configuration>')
+        provider = self.root / "custom-provider"
+        provider.write_bytes(b"fixture")
+        plugins = os.pathsep.join((str(self.root / "missing-provider"), str(provider)))
+        for shell in SHELLS:
+            for manager in ("dotnet", "nuget"):
+                with self.subTest(shell=shell, manager=manager):
+                    self.check(shell, manager, ["restore", "-?"], False)
+                    self.check(shell, manager, ["-?", "restore"], False)
+                    self.check(shell, manager, ["restore"], True,
+                               {"NUGET_PLUGIN_PATHS": plugins})
+
     def test_nuget_effective_sources_and_provider(self):
         feed = "https://pkgs.dev.azure.com/org/_packaging/feed/nuget/v3/index.json"
         visual = "https://org.pkgs.visualstudio.com/_packaging/feed/nuget/v3/index.json"

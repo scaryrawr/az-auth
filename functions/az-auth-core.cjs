@@ -38,6 +38,7 @@ function valueOption(manager, action, arg) {
 function help(manager, arg) {
   if (manager === 'dotnet' && arg === '-v') return false;
   return contains('-h --help -v --version -Help', arg) ||
+    (contains('dotnet nuget', manager) && arg === '-?') ||
     (manager === 'nuget' && arg.toLowerCase() === '-help');
 }
 
@@ -423,7 +424,7 @@ function nugetSources(invocation) {
 
 function providerInstalled(invocation) {
   if (invocation.env.NUGET_PLUGIN_PATHS) {
-    return invocation.env.NUGET_PLUGIN_PATHS.split(';').some(file => {
+    return invocation.env.NUGET_PLUGIN_PATHS.split(path.delimiter).some(file => {
       try { return fs.statSync(file).isFile(); } catch { return false; }
     });
   }
