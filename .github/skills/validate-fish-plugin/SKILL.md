@@ -5,13 +5,10 @@ description: Validate fish wrapper and completion changes with syntax and smoke 
 
 # Validate fish plugin changes
 
-When changes touch `functions/*.fish` or `completions/*.fish`, run:
-
-1. Syntax check:
-   - `fish --no-execute functions/*.fish completions/*.fish`
-2. For each changed wrapper (`npm`, `npx`, `pnpm`, `pnpx`, `yarn`, `bun`), run:
-   - `fish -c 'function az; echo fake-token; end; for f in functions/*.fish; source $f; end; <tool> --version >/dev/null'`
-3. If `functions/write-npm.fish` changed, verify usage error behavior:
-   - `fish -c 'source functions/write-npm.fish; write-npm; echo status:$status'`
+1. Check every file separately. A glob passed as fish script arguments checks only the first file.
+   - `for file in functions/*.fish completions/*.fish; do fish --no-execute "$file" || exit; done`
+2. Run `python3 tests/run.py`. Use `AZ_AUTH_PWSH` when PowerShell is not on `PATH`.
+3. Confirm the suite exercises authenticated and local actions, exact argv, Azure failures, inherited credentials, completion placeholders, and writer usage.
+4. If an individual smoke check is needed, use fake external applications on `PATH` and a temporary `HOME`, as the test suite does. A fish `az` function cannot stub the Node core's external Azure CLI.
 
 Report failures with the exact command and first failing output.
