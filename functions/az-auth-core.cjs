@@ -27,9 +27,9 @@ const scalar = value => value.trim().replace(/^["']|["']$/g, '');
 
 function valueOption(manager, action, arg) {
   if (arg.includes('=')) return false;
-  if (manager === 'nuget') return contains('-configfile -source', arg.toLowerCase());
-  return contains('-C --dir --cwd --prefix --filter --filter-prod -F --registry --userconfig --globalconfig --cache --config --store-dir --virtual-store-dir --modules-dir --use-node-version --network-concurrency --child-concurrency --reporter --loglevel --otp --tag --access --scope --from --include --exclude --package --configfile --source -s --project --configuration -c --framework -f --runtime --verbosity', arg) ||
-    (manager === 'dotnet' && arg === '-v') ||
+  if (manager === 'nuget') return contains('-configfile -source -s', arg.toLowerCase());
+  return contains('-C --dir --cwd --prefix --filter --filter-prod -F --registry --userconfig --globalconfig --cache --config --store-dir --virtual-store-dir --modules-dir --use-node-version --network-concurrency --child-concurrency --reporter --loglevel --otp --tag --access --scope --from --include --exclude --package --configfile --source --project --configuration -c --framework --runtime --verbosity', arg) ||
+    (manager === 'dotnet' && contains('-v -s -f', arg)) ||
     (arg.startsWith('--@') && arg.endsWith(':registry')) ||
     (manager === 'npm' && contains('-w --workspace', arg)) ||
     (arg === '-p' && (contains('npx pnpx', manager) || action === 'dlx'));

@@ -150,6 +150,11 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "npm", ["install"], False)
                 (self.project / ".npmrc").write_text("registry=https://private.invalid/feed/\n")
                 self.check(shell, "npm", ["install"], True)
+                for flag in ("-s", "-f"):
+                    self.check(shell, "npm", [flag, "install"], True)
+                    self.check(shell, "npm", [flag, "--registry=https://registry.npmjs.org/", "install"], False)
+                    self.check(shell, "npm", [flag, "run", "install"], False)
+                    self.check(shell, "corepack", ["npm", flag, "install"], True)
                 self.check(shell, "npm", ["install", "--registry=https://registry.npmjs.org/"], False)
                 self.check(shell, "npm", ["run", "install"], False)
                 self.check(shell, "npx", ["tool", "--help", "--registry=https://registry.npmjs.org/"], True)

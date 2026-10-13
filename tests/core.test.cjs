@@ -2,7 +2,16 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveShim } = require('../functions/az-auth-core.cjs');
+const { classify, resolveShim } = require('../functions/az-auth-core.cjs');
+
+test('Short value options follow their manager rather than consuming npm actions', () => {
+  for (const flag of ['-s', '-f']) {
+    assert.equal(classify('npm', [flag, 'install']).registry, true);
+    assert.equal(classify('npm', [flag, 'run', 'install']).registry, false);
+    assert.equal(classify('dotnet', [flag, '--help', 'restore']).registry, true);
+  }
+  assert.equal(classify('nuget', ['-Source', '--help', 'restore']).registry, true);
+});
 
 test('Node shims preserve every argument without invoking cmd.exe', () => {
   const args = ['', 'a b', '&whoami', '%PATH%', '!', 'line\nbreak', 'a"b', '^', '|', '<', '>'];
