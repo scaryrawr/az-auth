@@ -412,6 +412,9 @@ class ConformanceTests(unittest.TestCase):
                     self.assertIn("Credential Provider", result.stderr)
                     self.assertEqual(calls, [])
                     self.check(shell, manager, ["--version"], False)
+            for action in ("test", "run", "pack", "publish"):
+                with self.subTest(shell=shell, action=action, provider=False):
+                    self.check(shell, "dotnet", [action, "--no-build"], False)
         provider = self.home / ".nuget/plugins/provider"
         provider.mkdir(parents=True)
         (provider / "CredentialProvider.Microsoft.dll").write_bytes(b"fixture")
@@ -428,6 +431,10 @@ class ConformanceTests(unittest.TestCase):
                     self.assertEqual(calls[-1]["env"]["VSS_NUGET_ACCESSTOKEN"], "fixture-token")
                     self.assertEqual(calls[-1]["env"]["VSS_NUGET_URI_PREFIXES"], feed)
             self.check(shell, "dotnet", ["build", "--no-restore"], False)
+            for action in ("test", "run", "pack", "publish"):
+                with self.subTest(shell=shell, action=action, provider=True):
+                    self.check(shell, "dotnet", [action, "--no-build"], False)
+                    self.check(shell, "dotnet", [action, "--", "--no-build"], True)
             self.check(shell, "dotnet", ["restore", "--source", "https://api.nuget.org/v3/index.json"], False)
             self.check(shell, "nuget", ["restore", "-Source", visual], True)
             self.check(shell, "dotnet", ["restore"], False, {"VSS_NUGET_ACCESSTOKEN": "reuse"}, "reuse")

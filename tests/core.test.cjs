@@ -26,6 +26,17 @@ test('Short value options follow their manager rather than consuming npm actions
   assert.equal(classify('nuget', ['-Source', '--help', 'restore']).registry, true);
 });
 
+test('Dotnet no-build skips implicit restore only for commands that support it', () => {
+  for (const action of ['test', 'run', 'pack', 'publish']) {
+    assert.equal(classify('dotnet', [action, '--no-build']).registry, false);
+    assert.equal(classify('dotnet', [action, '--', '--no-build']).registry, true);
+    assert.equal(classify('dotnet', [action, '--configuration', '--no-build']).registry, true);
+  }
+  for (const action of ['restore', 'build']) {
+    assert.equal(classify('dotnet', [action, '--no-build']).registry, true);
+  }
+});
+
 test('Node shims preserve every argument without invoking cmd.exe', () => {
   const args = ['', 'a b', '&whoami', '%PATH%', '!', 'line\nbreak', 'a"b', '^', '|', '<', '>'];
   for (const [script, name] of [

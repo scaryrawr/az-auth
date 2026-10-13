@@ -91,7 +91,8 @@ function classify(manager, args) {
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
     if (arg === '--') break;
-    if (help(manager, arg) || (manager === 'dotnet' && arg === '--no-restore')) {
+    if (help(manager, arg) || (manager === 'dotnet' &&
+        (arg === '--no-restore' || (arg === '--no-build' && contains('test run pack publish', action))))) {
       result.registry = false;
       return result;
     }

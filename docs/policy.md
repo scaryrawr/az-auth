@@ -115,6 +115,7 @@ Custom Rush commands, generated temporary configs, and Rush-specific environment
 ## NuGet
 
 `dotnet restore` and implicit-restore `build`, `test`, `run`, `pack`, and `publish` qualify unless `--no-restore` is supplied before `--`.
+For `test`, `run`, `pack`, and `publish`, `--no-build` also skips authentication because it implies `--no-restore`.
 `nuget restore`, `nuget install`, and `nuget update` qualify.
 NuGet action names are case-insensitive. Other managers retain their case-sensitive action policy.
 Local information, help, version, and other actions do not inspect the credential provider or fetch tokens.
