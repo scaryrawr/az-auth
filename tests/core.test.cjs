@@ -4,6 +4,19 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { classify, resolveShim } = require('../functions/az-auth-core.cjs');
 
+test('npm typo aliases and case-insensitive NuGet actions retain registry policy', () => {
+  for (const alias of ['isnta', 'isntal']) {
+    assert.equal(classify('npm', [alias]).registry, true);
+    assert.equal(classify('corepack', ['npm', alias]).registry, true);
+    assert.equal(classify('npm', ['run', alias]).registry, false);
+  }
+  for (const action of ['Restore', 'INSTALL', 'uPdAtE']) {
+    assert.equal(classify('nuget', [action]).registry, true);
+    assert.equal(classify('nuget', [action, '-Help']).registry, false);
+  }
+  assert.equal(classify('npm', ['INSTALL']).registry, false);
+});
+
 test('Short value options follow their manager rather than consuming npm actions', () => {
   for (const flag of ['-s', '-f']) {
     assert.equal(classify('npm', [flag, 'install']).registry, true);

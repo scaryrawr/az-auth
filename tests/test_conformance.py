@@ -150,6 +150,10 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "npm", ["install"], False)
                 (self.project / ".npmrc").write_text("registry=https://private.invalid/feed/\n")
                 self.check(shell, "npm", ["install"], True)
+                for alias in ("isnta", "isntal"):
+                    self.check(shell, "npm", [alias], True)
+                    self.check(shell, "npm", [alias, "--registry=https://registry.npmjs.org/"], False)
+                    self.check(shell, "npm", ["run", alias], False)
                 for flag in ("-s", "-f"):
                     self.check(shell, "npm", [flag, "install"], True)
                     self.check(shell, "npm", [flag, "--registry=https://registry.npmjs.org/", "install"], False)
@@ -390,7 +394,9 @@ class ConformanceTests(unittest.TestCase):
             for manager, args in (("dotnet", ["restore"]), ("dotnet", ["build"]),
                                   ("dotnet", ["test"]), ("dotnet", ["run"]), ("dotnet", ["pack"]),
                                   ("dotnet", ["publish"]), ("nuget", ["restore"]),
-                                  ("nuget", ["install", "pkg"]), ("nuget", ["update"])):
+                                  ("nuget", ["install", "pkg"]), ("nuget", ["update"]),
+                                  ("nuget", ["Restore"]), ("nuget", ["INSTALL", "pkg"]),
+                                  ("nuget", ["uPdAtE"])):
                 with self.subTest(shell=shell, manager=manager, args=args):
                     calls = self.check(shell, manager, args, True)
                     self.assertEqual(calls[-1]["env"]["VSS_NUGET_ACCESSTOKEN"], "fixture-token")

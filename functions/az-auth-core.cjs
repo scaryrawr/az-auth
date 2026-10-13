@@ -9,7 +9,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const RESOURCE = '499b84ac-1321-427f-aa17-267ca6975798';
 const PLACEHOLDER = '__fish_completion_placeholder__';
 const ACTIONS = {
-  npm: 'install i in ins inst insta instal add isnt isntall ci clean-install ic install-clean update up upgrade udpate outdated audit view info show v search s se find ping whoami publish unpublish access dist-tag owner dist-tags stars star unstar',
+  npm: 'install i in ins inst insta instal add isnt isnta isntal isntall ci clean-install ic install-clean update up upgrade udpate outdated audit view info show v search s se find ping whoami publish unpublish access dist-tag owner dist-tags stars star unstar',
   pnpm: 'install i add update up upgrade remove rm uninstall un outdated audit view info show search ping whoami publish unpublish dist-tag owner fetch patch import dlx',
   yarn: 'install i add up upgrade upgrade-interactive remove outdated audit info publish tag owner dlx',
   'yarn-npm': 'audit info publish whoami login logout tag',
@@ -76,6 +76,7 @@ function classify(manager, args) {
     if (action === 'workspace' && rest.length >= 2) return classify(manager, rest.slice(1));
     if (action === 'workspaces' && rest[0] === 'foreach') return classify(manager, rest.slice(1));
   }
+  if (manager === 'nuget') action = action.toLowerCase();
   if (!action && contains('pnpm yarn', manager)) action = 'install';
   result.name = action;
   const runner = contains('npx pnpx', manager) || contains('dlx x', action);
