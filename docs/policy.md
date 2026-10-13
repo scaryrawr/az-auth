@@ -80,6 +80,7 @@ When several URL credentials match a registry, the longest path selects the effe
 The supported sources are:
 
 - npm global, user, and project `.npmrc`, in that order. CLI registry settings override environment settings and files. Scoped CLI settings such as `--@private:registry=URL` override that scope.
+- Invalid npm or npx CLI registry URLs do not replace configured registries. Arguments are still forwarded unchanged so the manager reports its own configuration warning.
 - `--globalconfig`, `--userconfig`, and their `npm_config_*` environment settings select file locations. Uppercase environment forms are supported. `npm_config_prefix`, `npm_config_registry`, and `npm_config_global` are also supported.
 - The project `.npmrc` at the nearest ancestor containing `package.json` or `node_modules`, or the working directory if neither exists. An arbitrary outer `.npmrc` is not project configuration. Global mode skips the project file. pnpm uses the nearest `pnpm-workspace.yaml` root when present.
 - `PREFIX/etc/npmrc` when supplied. Otherwise, the prefix is estimated from the `node` executable's location. Custom global layouts can require explicit `--globalconfig`.

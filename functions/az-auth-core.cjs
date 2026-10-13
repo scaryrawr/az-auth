@@ -311,7 +311,15 @@ function registryConfiguration(invocation) {
   for (const variable of ['NPM_CONFIG_REGISTRY', 'npm_config_registry']) {
     if (env[variable] !== undefined) config.entries.set('registry:default', env[variable]);
   }
-  for (const [key, value] of cli) config.entries.set(key, value);
+  for (const [key, value] of cli) {
+    if (manager === 'npm') {
+      try {
+        const url = new URL(value);
+        if (!contains('http: https:', url.protocol)) continue;
+      } catch { continue; }
+    }
+    config.entries.set(key, value);
+  }
   return config;
 }
 
