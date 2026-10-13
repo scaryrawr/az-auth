@@ -1,0 +1,72 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install shell test dependencies
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update
+            sudo apt-get install -y fish zsh
+          else
+            brew install fish
+          fi
+      - name: Node syntax
+        shell: bash
+        run: |
+          node --check functions/az-auth-core.cjs
+          node --check bin/az-auth-core
+          node --check tests/fixture.cjs
+      - name: Shell syntax
+        shell: bash
+        run: |
+          for file in functions/*.fish completions/*.fish; do
+            fish --no-execute "$file" || exit
+          done
+          bash -n shell/az-auth.sh
+          zsh -n shell/az-auth.sh
+      - name: Runtime conformance
+        run: python3 tests/run.py
+      - run: git diff --check
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify Node core and PowerShell
+        shell: pwsh
+        run: |
+          node --check functions/az-auth-core.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check bin/az-auth-core
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tests/run.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check

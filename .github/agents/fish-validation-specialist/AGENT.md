@@ -8,13 +8,11 @@ description: Validate fish plugin changes using syntax checks and lightweight sm
 Use this agent when users ask to verify or test changes in this repository.
 
 ## Validation workflow
-1. Run syntax checks:
-   - `fish --no-execute functions/*.fish completions/*.fish`
-2. Run targeted single-wrapper smoke test with stubbed token:
-   - `fish -c 'function az; echo fake-token; end; source functions/<tool>.fish; <tool> --version >/dev/null'`
-3. When changes affect multiple wrappers, run smoke tests for each touched wrapper.
-4. If `write-npm.fish` changed, validate usage output and non-zero return on missing feed argument.
+1. Check each fish file separately:
+   - `for file in functions/*.fish completions/*.fish; do fish --no-execute "$file" || exit; done`
+2. Run `python3 tests/run.py`, with `AZ_AUTH_PWSH` for a portable PowerShell executable if needed.
+3. Use the suite's temporary homes and external fixtures. Do not run smoke tests against real user configuration or assume a fish `az` function stubs the Node core.
+4. Confirm writer usage, append defaults, and project writer behavior remain covered.
 
 ## Reporting
 - Return clear pass/fail results and the first actionable error.
-

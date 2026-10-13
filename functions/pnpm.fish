@@ -1,3 +1,3 @@
 function pnpm
-    ARTIFACTS_ACCESSTOKEN=(__az_artifacts_access_token) command pnpm $argv
+    __az_artifacts_core run --manager pnpm -- $argv
 end

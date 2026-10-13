@@ -1,27 +1,22 @@
 ###-begin-pnpm-completion-###
 function _pnpm_completion
-  set cmd (commandline -o)
-  set cursor (commandline -C)
-  set words (count $cmd)
+    set cmd (commandline -o)
+    set cursor (commandline -C)
+    set words (count $cmd)
 
-  set -l artifacts_token (__az_artifacts_access_token)
-  if test -z "$artifacts_token"
-    set artifacts_token "__fish_completion_placeholder__"
-  end
+    set completions (DEBUG=" " COMP_CWORD="$words" COMP_LINE="$cmd " COMP_POINT="$cursor" SHELL=fish __az_artifacts_core complete --manager pnpm -- completion-server -- $cmd)
 
-  set completions (eval env DEBUG=\"" \"" COMP_CWORD=\""$words\"" COMP_LINE=\""$cmd \"" COMP_POINT=\""$cursor\"" SHELL=fish ARTIFACTS_ACCESSTOKEN=\""$artifacts_token\"" pnpm completion-server -- $cmd)
-
-  if [ "$completions" = "__tabtab_complete_files__" ]
-    set -l matches (commandline -ct)*
-    if [ -n "$matches" ]
-      __fish_complete_path (commandline -ct)
+    if [ "$completions" = __tabtab_complete_files__ ]
+        set -l matches (commandline -ct)*
+        if [ -n "$matches" ]
+            __fish_complete_path (commandline -ct)
+        end
+    else
+        for completion in $completions
+            echo -e $completion
+        end
     end
-  else
-    for completion in $completions
-      echo -e $completion
-    end
-  end
 end
 
-complete -f -d 'pnpm' -c pnpm -a "(_pnpm_completion)"
+complete -f -d pnpm -c pnpm -a "(_pnpm_completion)"
 ###-end-pnpm-completion-###
