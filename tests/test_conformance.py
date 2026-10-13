@@ -454,6 +454,26 @@ class ConformanceTests(unittest.TestCase):
         (self.bin / "npm.cmd").write_text('@echo off\r\n"%dp0%\\node.exe" "%dp0%\\node_modules\\npm\\bin\\npm-cli.js" %*\r\n')
         for shell in SHELLS:
             self.check(shell, "npm", args, True)
+        for manager in ("npm", "npx"):
+            if manager == "npx":
+                (self.bin / "npx.exe").unlink()
+            variable = "NPM_CLI_JS" if manager == "npm" else "NPX_CLI_JS"
+            script = self.bin / f"node_modules/npm/bin/{manager}-cli.js"
+            script.write_text((ROOT / "tests/fixture.cjs").read_text())
+            (self.bin / f"{manager}.cmd").write_text(
+                '@ECHO OFF\r\nSETLOCAL\r\nSET "NODE_EXE=%~dp0\\node.exe"\r\n'
+                f'SET "{variable}=%~dp0\\node_modules\\npm\\bin\\{manager}-cli.js"\r\n'
+                f'"%NODE_EXE%" "%{variable}%" %*\r\n')
+            prefix = self.bin / "node_modules/npm/bin/npm-prefix.js"
+            prefix.write_text("console.log(" + json.dumps(str(self.root / "global-prefix")) + ");")
+            global_script = self.root / f"global-prefix/node_modules/npm/bin/{manager}-cli.js"
+            global_script.parent.mkdir(parents=True, exist_ok=True)
+            global_script.write_text((ROOT / "tests/fixture.cjs").read_text())
+            for shell in SHELLS:
+                self.check(shell, manager, args, True)
+            script.write_text("process.exit(99);")
+            self.check("core", manager, args, True)
+            script.write_text((ROOT / "tests/fixture.cjs").read_text())
         for manager in ("pnpm", "pnpx"):
             (self.bin / f"{manager}.exe").unlink()
             script = self.bin / f"node_modules/corepack/dist/{manager}.js"

@@ -38,6 +38,25 @@ test('Azure CLI shim invokes Python with an argument array', () => {
   assert.deepEqual(resolveShim('C:\\azure\\bin\\az.cmd', '"%~dp0..\\python.exe" -IBm azure.cli %*', ['account', '&']), {
     file: 'C:\\azure\\python.exe', args: ['-IBm', 'azure.cli', 'account', '&'],
   });
+
+  test('Variable-based npm launchers resolve only their known CLI entrypoints', () => {
+    const args = ['', 'a b', '&', '%PATH%'];
+    for (const manager of ['npm', 'npx']) {
+      const variable = manager === 'npm' ? 'NPM_CLI_JS' : 'NPX_CLI_JS';
+      const shim = [
+        '@ECHO OFF', 'SETLOCAL', 'SET "NODE_EXE=%~dp0\\node.exe"',
+        'SET "NPM_PREFIX_JS=%~dp0\\node_modules\\npm\\bin\\npm-prefix.js"',
+        `SET "${variable}=%~dp0\\node_modules\\npm\\bin\\${manager}-cli.js"`,
+        `"%NODE_EXE%" "%${variable}%" %*`,
+      ].join('\r\n');
+      assert.deepEqual(resolveShim(`C:\\tools\\${manager}.cmd`, shim, args), {
+        file: 'node', args: [`C:\\tools\\node_modules\\npm\\bin\\${manager}-cli.js`, ...args],
+        prefix: 'C:\\tools\\node_modules\\npm\\bin\\npm-prefix.js',
+      });
+      assert.throws(() => resolveShim(`C:\\tools\\${manager}.cmd`,
+        shim.replace(`${manager}-cli.js`, 'arbitrary.js'), args), /Unsupported Windows launcher/);
+    }
+  });
 });
 
 test('Unknown batch and PowerShell launchers fail closed', () => {

@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const RESOURCE = '499b84ac-1321-427f-aa17-267ca6975798';
 const PLACEHOLDER = '__fish_completion_placeholder__';
@@ -448,6 +448,20 @@ function resolveShim(file, content, args, windowsPath = path.win32) {
   if (azure && windowsPath.basename(file).toLowerCase() === 'az.cmd') {
     return { file: windowsPath.resolve(windowsPath.dirname(file), azure[1]), args: ['-IBm', 'azure.cli', ...args] };
   }
+  const npmManager = windowsPath.basename(file).toLowerCase().replace(/\.cmd$/, '');
+  if (contains('npm npx', npmManager)) {
+    const variable = npmManager === 'npm' ? 'NPM_CLI_JS' : 'NPX_CLI_JS';
+    const assignment = new RegExp(`^\\s*SET "${variable}=%~dp0[\\\\/]node_modules[\\\\/]npm[\\\\/]bin[\\\\/]${npmManager}-cli\\.js"\\s*$`, 'im');
+    const invocation = new RegExp(`^\\s*"%NODE_EXE%" "%${variable}%" %\\*\\s*$`, 'im');
+    if (assignment.test(content) && invocation.test(content)) {
+      const directory = windowsPath.dirname(file);
+      return {
+        file: 'node',
+        args: [windowsPath.join(directory, 'node_modules', 'npm', 'bin', `${npmManager}-cli.js`), ...args],
+        prefix: windowsPath.join(directory, 'node_modules', 'npm', 'bin', 'npm-prefix.js'),
+      };
+    }
+  }
   const node = content.match(/"(?:%dp0%|%~dp0|%basedir%)[\\/]?([^"%\r\n]+)"\s+%\*/i);
   if (node) {
     const script = node[1].replace(/\\/g, '/');
@@ -466,6 +480,18 @@ function command(name, args, env) {
   if (resolved.file === 'node') {
     const local = path.join(path.dirname(file), 'node.exe');
     resolved.file = exists(local) ? local : executable('node', env);
+    if (resolved.prefix && exists(resolved.prefix)) {
+      const prefix = spawnSync(resolved.file, [resolved.prefix], {
+        env, shell: false, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 1024 * 1024,
+      });
+      if (prefix.error) throw prefix.error;
+      if (prefix.status !== 0) throw new Error(`Cannot resolve the npm installation prefix for ${name}.`);
+      const directory = prefix.stdout.trim();
+      if (directory) {
+        const script = path.join(directory, 'node_modules', 'npm', 'bin', `${name}-cli.js`);
+        if (exists(script)) resolved.args[0] = script;
+      }
+    }
     if (!exists(resolved.args[0])) throw new Error(`Node entrypoint for ${name} is missing.`);
   }
   return resolved;
