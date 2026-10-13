@@ -86,6 +86,7 @@ The supported sources are:
 - `PREFIX/etc/npmrc` when supplied. Otherwise, the prefix is estimated from the `node` executable's location. Custom global layouts can require explicit `--globalconfig`.
 - Yarn `.yarnrc.yml` files in parent directories, with nearer files taking precedence. Standard two-space `npmScopes` and `npmRegistries` mappings, `npmRegistryServer`, and `npmAuthToken` are supported.
 - Bun's home `.bunfig.toml` and working-directory `.bunfig.toml` or `bunfig.toml`. Simple `[install]` registry values, inline registry objects, and `[install.scopes]` URL and token settings are supported.
+- Bun registry and token keys in the same context are order-independent. A nearer `[install]` registry-only setting clears an inherited default token.
 
 Comments and unrelated token-variable references do not count as credentials.
 A configured token-backed scope counts even for public dependencies.

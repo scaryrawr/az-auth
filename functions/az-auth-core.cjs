@@ -120,6 +120,7 @@ function readConfig(file, required = false) {
 
 function readRegistry(config, format, file) {
   let section = '', context = 'default';
+  const bunTokens = new Set();
   for (const rawLine of readConfig(file).split(/\r?\n/)) {
     const raw = rawLine.replace(/\s+[;#].*$/, '');
     const line = raw.trim();
@@ -169,10 +170,14 @@ function readRegistry(config, format, file) {
         const url = value.match(/(?:url|registry)\s*=\s*["']([^"']+)["']/);
         if (url) config.entries.set(`registry:${context}`, url[1]);
         config.entries.set(`token:${context}`, /token\s*=\s*["']\$(?:\{ARTIFACTS_ACCESSTOKEN\}|ARTIFACTS_ACCESSTOKEN)["']/.test(value));
+        bunTokens.add(context);
       } else if (contains('url registry', key)) {
         config.entries.set(`registry:${context}`, value);
-        if (key === 'registry' && section === 'install') config.entries.set(`token:${context}`, false);
-      } else if (key === 'token') config.entries.set(`token:${context}`, contains('$ARTIFACTS_ACCESSTOKEN ${ARTIFACTS_ACCESSTOKEN}', value));
+        if (key === 'registry' && section === 'install' && !bunTokens.has(context)) config.entries.set(`token:${context}`, false);
+      } else if (key === 'token') {
+        config.entries.set(`token:${context}`, contains('$ARTIFACTS_ACCESSTOKEN ${ARTIFACTS_ACCESSTOKEN}', value));
+        bunTokens.add(context);
+      }
     }
   }
 }

@@ -170,6 +170,28 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "bun", ["x", "--no-install", "tool"], False)
                 (self.project / ".npmrc").unlink()
 
+    def test_bun_token_key_order_and_registry_override(self):
+        (self.home / ".npmrc").unlink()
+        bunfig = self.project / "bunfig.toml"
+        for shell in SHELLS:
+            with self.subTest(shell=shell):
+                for section, registry in (
+                    ("install", 'registry = "https://private.invalid/feed/"'),
+                    ("install.scopes.private", 'url = "https://private.invalid/feed/"'),
+                ):
+                    for token in ('token = "$ARTIFACTS_ACCESSTOKEN"', 'token = "literal-token"'):
+                        for keys in ((registry, token), (token, registry)):
+                            bunfig.write_text(f"[{section}]\n" + "\n".join(keys) + "\n")
+                            self.check(shell, "bun", ["install"], "ARTIFACTS_ACCESSTOKEN" in token)
+                            self.check(shell, "bun", ["run", "install"], False)
+                (self.home / ".bunfig.toml").write_text(
+                    '[install]\nregistry = {url = "https://private.invalid/feed/", token = "$ARTIFACTS_ACCESSTOKEN"}\n')
+                bunfig.write_text('[install]\nregistry = "https://registry.npmjs.org/"\n')
+                self.check(shell, "bun", ["install"], False)
+                bunfig.unlink()
+                self.check(shell, "bun", ["install"], True)
+                (self.home / ".bunfig.toml").unlink()
+
     def test_effective_credentials_use_longest_registry_path(self):
         for shell in SHELLS:
             with self.subTest(shell=shell):
