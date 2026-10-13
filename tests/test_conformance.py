@@ -170,6 +170,54 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "bun", ["x", "--no-install", "tool"], False)
                 (self.project / ".npmrc").unlink()
 
+    def test_yarn_registry_scheme_matching(self):
+        (self.home / ".npmrc").unlink()
+        yarnrc = self.project / ".yarnrc.yml"
+        placeholder = "__fish_completion_placeholder__"
+        for shell in SHELLS:
+            with self.subTest(shell=shell):
+                for registry, credential, auth in (
+                    ("https", "http://private.invalid/feed/", False),
+                    ("http", "https://private.invalid/feed/", False),
+                    ("http", "HTTP://PRIVATE.INVALID/feed/", True),
+                    ("https", "HTTPS://PRIVATE.INVALID/feed/", True),
+                    ("https", "https://private.invalid/Feed/", False),
+                ):
+                    yarnrc.write_text(
+                        f'npmRegistryServer: "{registry}://private.invalid/feed/"\n'
+                        f'npmRegistries:\n  "{credential}":\n'
+                        '    npmAuthToken: "${ARTIFACTS_ACCESSTOKEN}"\n')
+                    self.check(shell, "yarn", ["install"], auth, token=None if auth else placeholder)
+                    self.check(shell, "yarn", ["run", "build"], False, token=placeholder)
+                (self.home / ".npmrc").write_text(
+                    "//private.invalid/feed/:_authToken=${ARTIFACTS_ACCESSTOKEN}\n")
+                for registry in ("http", "https"):
+                    yarnrc.write_text(f'npmRegistryServer: "{registry}://private.invalid/feed/"\n')
+                    self.check(shell, "yarn", ["install"], True)
+                (self.home / ".npmrc").unlink()
+
+    def test_yarn_effective_placeholder_overrides(self):
+        (self.home / ".npmrc").unlink()
+        parent = self.root / ".yarnrc.yml"
+        yarnrc = self.project / ".yarnrc.yml"
+        for shell in SHELLS:
+            with self.subTest(shell=shell):
+                for prefix, indent in (
+                    ('npmRegistryServer: "https://private.invalid/feed/"\n', ""),
+                    ('npmScopes:\n  private:\n    npmRegistryServer: "https://private.invalid/feed/"\n', "    "),
+                    ('npmRegistries:\n  "https://private.invalid/feed/":\n', "    "),
+                ):
+                    parent.write_text(prefix + indent + 'npmAuthToken: "${ARTIFACTS_ACCESSTOKEN}"\n')
+                    yarnrc.write_text(prefix + indent + 'npmAuthToken: "literal-token"\n')
+                    self.check(shell, "yarn", ["run", "build"], False)
+                    self.check(shell, "yarn", ["install"], False)
+                parent.write_text(
+                    'npmAuthToken: "${ARTIFACTS_ACCESSTOKEN}"\n'
+                    'npmScopes:\n  private:\n    npmAuthToken: "${ARTIFACTS_ACCESSTOKEN}"\n')
+                yarnrc.write_text('npmAuthToken: "literal-token"\n')
+                self.check(shell, "yarn", ["run", "build"], False, token="__fish_completion_placeholder__")
+                parent.unlink()
+
     def test_bun_token_key_order_and_registry_override(self):
         (self.home / ".npmrc").unlink()
         bunfig = self.project / "bunfig.toml"

@@ -74,6 +74,7 @@ Auth entries alone do not trigger token acquisition.
 The effective default registry or a configured scope must match a credential reference to `ARTIFACTS_ACCESSTOKEN`.
 URL path matching keeps `/feed/` distinct from `/feed-other/`.
 Registry schemes and hosts are case-insensitive; paths remain case-sensitive.
+Scheme-qualified Yarn credentials match only the same scheme. Scheme-less `//host/path/` credentials match either HTTP or HTTPS.
 An effective literal credential overrides an inherited placeholder reference at the same key.
 When several URL credentials match a registry, the longest path selects the effective credential.
 
@@ -98,6 +99,7 @@ Unsupported settings include npm built-in config, pnpm `auth.ini` or `config.yam
 Scoped environment names and native `YARN_*` and `BUN_*` overrides are not resolved.
 
 When Yarn configuration requires token interpolation and the variable is absent, local commands receive `__fish_completion_placeholder__`.
+Only effective Yarn credential references count; nearer literal overrides clear the placeholder requirement for that key.
 An explicitly supplied value, including an empty string, is preserved on no-auth paths.
 Other local commands do not receive a placeholder.
 pnpm completion always receives the placeholder and never invokes Azure CLI.

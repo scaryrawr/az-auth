@@ -150,8 +150,10 @@ function readRegistry(config, format, file) {
       if (key === 'npmRegistryServer') config.entries.set(`registry:${context}`, value);
       else if (key === 'npmAuthToken') {
         const reference = /^\$\{ARTIFACTS_ACCESSTOKEN([:-][^}]*)?\}$/.test(value);
-        config.placeholder ||= reference;
-        config.entries.set(`${section === 'npmRegistries' ? 'auth' : 'token'}:${context}`, reference);
+        const credentialKey = `${section === 'npmRegistries' ? 'auth' : 'token'}:${context}`;
+        if (reference) config.yarnReferences.add(credentialKey);
+        else config.yarnReferences.delete(credentialKey);
+        config.entries.set(credentialKey, reference);
       }
     } else if (format === 'bun') {
       if (line.startsWith('[')) {
@@ -187,7 +189,7 @@ function hasFeed(config) {
     try {
       const url = new URL(value.startsWith('//') ? `https:${value}` : value);
       if (!contains('http: https:', url.protocol) || url.username || url.password || url.search || url.hash) return null;
-      return `//${url.host}${url.pathname.replace(/\/+$/, '')}/`;
+      return { protocol: url.protocol, authorityPath: `//${url.host}${url.pathname.replace(/\/+$/, '')}/` };
     } catch { return null; }
   };
   for (const [key, value] of config.entries) {
@@ -200,10 +202,12 @@ function hasFeed(config) {
     let credential = false, specificity = -1;
     for (const [auth, reference] of config.entries) {
       if (!auth.startsWith('auth:')) continue;
-      const prefix = normalized(auth.slice(5));
-      if (prefix && registry.startsWith(prefix) && prefix.length >= specificity) {
+      const credentialUrl = auth.slice(5);
+      const prefix = normalized(credentialUrl);
+      if (prefix && (credentialUrl.startsWith('//') || prefix.protocol === registry.protocol) &&
+          registry.authorityPath.startsWith(prefix.authorityPath) && prefix.authorityPath.length >= specificity) {
         credential = reference;
-        specificity = prefix.length;
+        specificity = prefix.authorityPath.length;
       }
     }
     if (credential) return true;
@@ -312,7 +316,7 @@ function registryConfiguration(invocation) {
   }
   if (manager === 'yarn') files.push(...dirs.slice().reverse().map(dir => ['yarn', path.join(dir, '.yarnrc.yml')]));
   if (manager === 'bun') files.push(...[path.join(env.HOME, '.bunfig.toml'), path.join(cwd, '.bunfig.toml'), path.join(cwd, 'bunfig.toml')].map(file => ['bun', file]));
-  const config = { entries: new Map([['registry:default', 'https://registry.npmjs.org/']]), placeholder: false };
+  const config = { entries: new Map([['registry:default', 'https://registry.npmjs.org/']]), yarnReferences: new Set() };
   for (const [format, file] of files) readRegistry(config, format, file);
   for (const variable of ['NPM_CONFIG_REGISTRY', 'npm_config_registry']) {
     if (env[variable] !== undefined) config.entries.set('registry:default', env[variable]);
@@ -584,7 +588,7 @@ async function run(invocation, completion) {
     } else {
       const config = registryConfiguration(invocation);
       if (action.registry && hasFeed(config)) decision = Decision.token;
-      else if (config.placeholder && !Object.hasOwn(env, 'ARTIFACTS_ACCESSTOKEN')) decision = Decision.placeholder;
+      else if (config.yarnReferences.size && !Object.hasOwn(env, 'ARTIFACTS_ACCESSTOKEN')) decision = Decision.placeholder;
     }
     if (decision === Decision.token) {
       const inherited = env.ARTIFACTS_ACCESSTOKEN?.trim() ? env.ARTIFACTS_ACCESSTOKEN :
