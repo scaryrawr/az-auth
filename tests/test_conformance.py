@@ -449,6 +449,15 @@ class ConformanceTests(unittest.TestCase):
         (self.bin / "npm.cmd").write_text('@echo off\r\n"%dp0%\\node.exe" "%dp0%\\node_modules\\npm\\bin\\npm-cli.js" %*\r\n')
         for shell in SHELLS:
             self.check(shell, "npm", args, True)
+        for manager in ("pnpm", "pnpx"):
+            (self.bin / f"{manager}.exe").unlink()
+            script = self.bin / f"node_modules/corepack/dist/{manager}.js"
+            script.parent.mkdir(parents=True, exist_ok=True)
+            script.write_text((ROOT / "tests/fixture.cjs").read_text())
+            (self.bin / f"{manager}.cmd").write_text(
+                f'@echo off\r\n"%dp0%\\node.exe" "%dp0%\\node_modules\\corepack\\dist\\{manager}.js" %*\r\n')
+            for shell in SHELLS:
+                self.check(shell, manager, args, True)
         (self.bin / "az.exe").unlink()
         azure = self.bin / "azure"
         azure.mkdir()

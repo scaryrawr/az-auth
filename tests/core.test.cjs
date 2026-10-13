@@ -12,6 +12,8 @@ test('Node shims preserve every argument without invoking cmd.exe', () => {
     ['pnpm/bin/pnpm.cjs', 'pnpm'],
     ['yarn/bin/yarn.js', 'yarn'],
     ['corepack/dist/corepack.js', 'corepack'],
+    ['corepack/dist/pnpm.js', 'pnpm'],
+    ['corepack/dist/pnpx.js', 'pnpx'],
     ['@microsoft/rush/bin/rush', 'rush'],
     ['@microsoft/rush/bin/rush-pnpm', 'rush-pnpm'],
   ]) {

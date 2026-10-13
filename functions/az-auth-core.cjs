@@ -452,7 +452,7 @@ function resolveShim(file, content, args, windowsPath = path.win32) {
   if (node) {
     const script = node[1].replace(/\\/g, '/');
     const rush = script.endsWith('node_modules/@microsoft/rush/bin/rush') || script.endsWith('node_modules/@microsoft/rush/bin/rush-pnpm');
-    if (rush || contains('npm-cli.js npx-cli.js pnpm.cjs pnpx.cjs yarn.js corepack.js rush.js rush-pnpm.js', path.posix.basename(script))) {
+    if (rush || contains('npm-cli.js npx-cli.js pnpm.cjs pnpx.cjs pnpm.js pnpx.js yarn.js corepack.js rush.js rush-pnpm.js', path.posix.basename(script))) {
       return { file: 'node', args: [windowsPath.resolve(windowsPath.dirname(file), node[1]), ...args] };
     }
   }

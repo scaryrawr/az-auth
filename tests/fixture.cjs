@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const entrypoint = path.basename(process.argv[1]);
-const name = ({ 'npm-cli.js': 'npm', 'npx-cli.js': 'npx' })[entrypoint] || entrypoint;
+const name = ({ 'npm-cli.js': 'npm', 'npx-cli.js': 'npx', 'pnpm.js': 'pnpm', 'pnpx.js': 'pnpx' })[entrypoint] || entrypoint;
 const args = process.argv.slice(2);
 const env = Object.fromEntries(['ARTIFACTS_ACCESSTOKEN', 'VSS_NUGET_ACCESSTOKEN', 'VSS_NUGET_URI_PREFIXES'].map(key => [key, process.env[key] ?? null]));
 fs.appendFileSync(process.env.TEST_LOG, JSON.stringify({ command: name, args, env }) + '\n');
