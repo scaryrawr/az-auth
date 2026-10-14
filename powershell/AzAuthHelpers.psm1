@@ -1,7 +1,13 @@
 $script:AzAuthCore = Join-Path $PSScriptRoot '../functions/az-auth-core.cjs'
 
 function Invoke-AzAuthCore {
-    param([string]$Operation, [string]$Manager, [object[]]$Arguments)
+    param(
+        [string]$Operation,
+        [string]$Manager,
+        [object[]]$Arguments,
+        [bool]$HasPipelineInput,
+        [System.Collections.IEnumerator]$PipelineInput
+    )
     if (-not (Test-Path -LiteralPath $script:AzAuthCore -PathType Leaf)) {
         $global:LASTEXITCODE = 127
         Write-Error 'az-auth-core is required. Reinstall the checkout. See README.md.'
@@ -22,7 +28,11 @@ function Invoke-AzAuthCore {
         $coreArgs += @('--manager', $Manager, '--') + $Arguments
     }
     if ($IsWindows) {
-        & $node.Source @coreArgs
+        if ($HasPipelineInput) {
+            $PipelineInput | & $node.Source @coreArgs
+        } else {
+            & $node.Source @coreArgs
+        }
         $global:LASTEXITCODE = $LASTEXITCODE
     } else {
         # PowerShell expands unquoted splatted wildcards on Unix.
@@ -49,25 +59,25 @@ function Invoke-AzAuthCore {
     }
 }
 
-function npm { Invoke-AzAuthCore run npm $args }
-function npx { Invoke-AzAuthCore run npx $args }
-function pnpm { Invoke-AzAuthCore run pnpm $args }
-function pnpx { Invoke-AzAuthCore run pnpx $args }
-function pn { Invoke-AzAuthCore run pnpm $args }
-function yarn { Invoke-AzAuthCore run yarn $args }
-function bun { Invoke-AzAuthCore run bun $args }
-function corepack { Invoke-AzAuthCore run corepack $args }
-function dotnet { Invoke-AzAuthCore run dotnet $args }
-function nuget { Invoke-AzAuthCore run nuget $args }
-function rush { Invoke-AzAuthCore run rush $args }
-function Invoke-RushPnpm { Invoke-AzAuthCore run rush-pnpm $args }
+function npm { Invoke-AzAuthCore run npm $args $MyInvocation.ExpectingInput $input }
+function npx { Invoke-AzAuthCore run npx $args $MyInvocation.ExpectingInput $input }
+function pnpm { Invoke-AzAuthCore run pnpm $args $MyInvocation.ExpectingInput $input }
+function pnpx { Invoke-AzAuthCore run pnpx $args $MyInvocation.ExpectingInput $input }
+function pn { Invoke-AzAuthCore run pnpm $args $MyInvocation.ExpectingInput $input }
+function yarn { Invoke-AzAuthCore run yarn $args $MyInvocation.ExpectingInput $input }
+function bun { Invoke-AzAuthCore run bun $args $MyInvocation.ExpectingInput $input }
+function corepack { Invoke-AzAuthCore run corepack $args $MyInvocation.ExpectingInput $input }
+function dotnet { Invoke-AzAuthCore run dotnet $args $MyInvocation.ExpectingInput $input }
+function nuget { Invoke-AzAuthCore run nuget $args $MyInvocation.ExpectingInput $input }
+function rush { Invoke-AzAuthCore run rush $args $MyInvocation.ExpectingInput $input }
+function Invoke-RushPnpm { Invoke-AzAuthCore run rush-pnpm $args $MyInvocation.ExpectingInput $input }
 function write-npm {
     if ($args.Count -eq 0) {
-        Invoke-AzAuthCore write-npm '' @('--from-project')
+        Invoke-AzAuthCore write-npm '' @('--from-project') $MyInvocation.ExpectingInput $input
     } elseif ($args.Count -eq 1 -and $args[0] -in @('-Help', '--help')) {
         'Usage: write-npm [FEED [USER [EMAIL]]]. With no arguments, read the project .npmrc and prompt before replacing user authentication entries.'
     } else {
-        Invoke-AzAuthCore write-npm '' $args
+        Invoke-AzAuthCore write-npm '' $args $MyInvocation.ExpectingInput $input
     }
 }
 

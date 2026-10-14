@@ -66,6 +66,8 @@ Import defines functions and an alias only.
 It never changes process environment variables.
 
 On Windows, the module invokes Node with standard native argument passing.
+PowerShell pipeline input is forwarded to the child using native text conversion.
+Calls without pipeline input retain console standard input.
 On Unix, it uses a direct process invocation to prevent PowerShell from expanding splatted wildcard arguments.
 Unix PowerShell output goes directly to the host's standard streams, not the PowerShell object pipeline.
 Use the core directly when PowerShell pipeline processing is needed on Unix.

@@ -143,6 +143,52 @@ class ConformanceTests(unittest.TestCase):
                 self.assertEqual([c["env"]["ARTIFACTS_ACCESSTOKEN"] for c in calls if c["command"] == "npm"],
                                  ["fixture-token", None])
 
+    @unittest.skipUnless(os.name == "nt" and PWSH, "Windows PowerShell pipeline")
+    def test_powershell_pipeline_input_streams_and_status(self):
+        args = ["--version", "", "a b", 'a"b', "&", "%PATH%", "*"]
+        code = (
+            '$a = @(ConvertFrom-Json $env:TEST_ARGS); '
+            '@("pipeline payload", "", "a b & %PATH%") | & $env:TEST_MANAGER @a; '
+            'exit $LASTEXITCODE'
+        )
+        for manager in (*MANAGERS, "Invoke-RushPnpm"):
+            with self.subTest(manager=manager):
+                result, calls = self.invoke("pwsh", manager, args,
+                    {"TEST_IO": "yes", "TEST_MANAGER_STATUS": "37"}, code=code)
+                self.assertEqual(result.returncode, 37, result.stderr)
+                self.assertEqual(result.stdout, "manager stdout\npipeline payload\n\na b & %PATH%\n")
+                self.assertEqual(result.stderr, "manager stderr\n")
+                expected = "pnpm" if manager == "pn" else "rush-pnpm" if manager == "Invoke-RushPnpm" else manager
+                self.assertEqual([call["command"] for call in calls], [expected])
+                self.assertEqual(calls[-1]["args"], args)
+                self.assertIsNone(calls[-1]["env"]["ARTIFACTS_ACCESSTOKEN"])
+        result, calls = self.invoke("pwsh", "npm", ["install"],
+            {"TEST_IO": "yes"}, code=code)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "manager stdout\npipeline payload\n\na b & %PATH%\n")
+        self.assertEqual([call["command"] for call in calls], ["az", "npm"])
+        self.assertEqual(calls[-1]["env"]["ARTIFACTS_ACCESSTOKEN"], "fixture-token")
+
+    @unittest.skipUnless(os.name == "nt" and PWSH, "Windows PowerShell pipeline")
+    def test_powershell_writer_pipeline_confirmation(self):
+        feed = "pkgs.dev.azure.com/org/_packaging/feed/npm/registry/"
+        (self.project / ".npmrc").write_text(f"registry=https://{feed}\n")
+        original = f"//{feed}:_authToken=stale\n"
+        for answer in ("n", "y"):
+            with self.subTest(answer=answer):
+                (self.home / ".npmrc").write_text(original)
+                result, calls = self.invoke("pwsh", "write-npm",
+                    code=f"'{answer}' | write-npm; exit $LASTEXITCODE")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Update existing", result.stderr)
+                self.assertEqual(calls, [])
+                content = (self.home / ".npmrc").read_text()
+                if answer == "n":
+                    self.assertEqual(content, original)
+                else:
+                    self.assertIn(f"//{feed}:_authToken=${{ARTIFACTS_ACCESSTOKEN}}\n", content)
+                    self.assertNotIn("stale", content)
+
     def test_registry_selection_and_runner_boundaries(self):
         self.auth(registry=False)
         for shell in SHELLS:
