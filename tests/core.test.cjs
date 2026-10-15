@@ -43,6 +43,8 @@ test('Node shims preserve every argument without invoking cmd.exe', () => {
     ['npm/bin/npm-cli.js', 'npm'],
     ['npm/bin/npx-cli.js', 'npx'],
     ['pnpm/bin/pnpm.cjs', 'pnpm'],
+    ['pnpm/bin/pnpm.mjs', 'pnpm'],
+    ['pnpm/bin/pnpx.mjs', 'pnpx'],
     ['yarn/bin/yarn.js', 'yarn'],
     ['corepack/dist/corepack.js', 'corepack'],
     ['corepack/dist/pnpm.js', 'pnpm'],
@@ -60,6 +62,9 @@ test('Node shims preserve every argument without invoking cmd.exe', () => {
 
 test('Azure CLI shim invokes Python with an argument array', () => {
   assert.deepEqual(resolveShim('C:\\azure\\bin\\az.cmd', '"%~dp0..\\python.exe" -IBm azure.cli %*', ['account', '&']), {
+    file: 'C:\\azure\\python.exe', args: ['-IBm', 'azure.cli', 'account', '&'],
+  });
+  assert.deepEqual(resolveShim('C:\\azure\\bin\\az.cmd', '"%~dp0\\..\\python.exe" -IBm azure.cli %*', ['account', '&']), {
     file: 'C:\\azure\\python.exe', args: ['-IBm', 'azure.cli', 'account', '&'],
   });
 

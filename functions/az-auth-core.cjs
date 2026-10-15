@@ -477,7 +477,7 @@ function resolveShim(file, content, args, windowsPath = path.win32) {
   if (!/\.cmd$/i.test(file)) throw new Error(`Unsupported Windows launcher ${file}. Only standard .cmd shims or native executables are supported.`);
   const azure = content.match(/"%~dp0([^"%\r\n]*python\.exe)"\s+-IBm\s+azure\.cli\s+%\*/i);
   if (azure && windowsPath.basename(file).toLowerCase() === 'az.cmd') {
-    return { file: windowsPath.resolve(windowsPath.dirname(file), azure[1]), args: ['-IBm', 'azure.cli', ...args] };
+    return { file: windowsPath.join(windowsPath.dirname(file), azure[1]), args: ['-IBm', 'azure.cli', ...args] };
   }
   const npmManager = windowsPath.basename(file).toLowerCase().replace(/\.cmd$/, '');
   if (contains('npm npx', npmManager)) {
@@ -497,7 +497,7 @@ function resolveShim(file, content, args, windowsPath = path.win32) {
   if (node) {
     const script = node[1].replace(/\\/g, '/');
     const rush = script.endsWith('node_modules/@microsoft/rush/bin/rush') || script.endsWith('node_modules/@microsoft/rush/bin/rush-pnpm');
-    if (rush || contains('npm-cli.js npx-cli.js pnpm.cjs pnpx.cjs pnpm.js pnpx.js yarn.js corepack.js rush.js rush-pnpm.js', path.posix.basename(script))) {
+    if (rush || contains('npm-cli.js npx-cli.js pnpm.cjs pnpx.cjs pnpm.mjs pnpx.mjs pnpm.js pnpx.js yarn.js corepack.js rush.js rush-pnpm.js', path.posix.basename(script))) {
       return { file: 'node', args: [windowsPath.resolve(windowsPath.dirname(file), node[1]), ...args] };
     }
   }
