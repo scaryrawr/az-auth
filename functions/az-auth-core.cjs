@@ -11,7 +11,7 @@ const PLACEHOLDER = '__fish_completion_placeholder__';
 const ACTIONS = {
   npm: 'install i in ins inst insta instal add isnt isnta isntal isntall ci clean-install ic install-clean update up upgrade udpate outdated audit view info show v search s se find ping whoami publish unpublish access dist-tag owner dist-tags stars star unstar',
   pnpm: 'install i add update up upgrade remove rm uninstall un outdated audit view info show search ping whoami publish unpublish dist-tag owner fetch patch import dlx',
-  yarn: 'install i add up upgrade upgrade-interactive remove outdated audit info publish tag owner dlx',
+  yarn: 'install i fast add up upgrade upgrade-interactive remove outdated audit info publish tag owner dlx',
   'yarn-npm': 'audit info publish whoami login logout tag',
   bun: 'install i add a update remove rm uninstall publish outdated x',
   rush: 'install update add',
