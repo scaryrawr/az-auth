@@ -480,6 +480,12 @@ function resolveShim(file, content, args, windowsPath = path.win32) {
     return { file: windowsPath.join(windowsPath.dirname(file), azure[1]), args: ['-IBm', 'azure.cli', ...args] };
   }
   const npmManager = windowsPath.basename(file).toLowerCase().replace(/\.cmd$/, '');
+
+  if (npmManager === 'pnpm' &&
+      /^\s*"(?:%dp0%|%~dp0|%basedir%)[\\/]?node_modules[\\/]pnpm[\\/]pnpm\.exe"\s+%\*\s*$/im.test(content)) {
+    return { file: windowsPath.join(windowsPath.dirname(file), 'node_modules', 'pnpm', 'pnpm.exe'), args };
+  }
+
   if (contains('npm npx', npmManager)) {
     const variable = npmManager === 'npm' ? 'NPM_CLI_JS' : 'NPX_CLI_JS';
     const assignment = new RegExp(`^\\s*SET "${variable}=%~dp0[\\\\/]node_modules[\\\\/]npm[\\\\/]bin[\\\\/]${npmManager}-cli\\.js"\\s*$`, 'im');
