@@ -60,6 +60,35 @@ test('Node shims preserve every argument without invoking cmd.exe', () => {
   }
 });
 
+test('Native pnpm shims resolve the executable without invoking cmd.exe', () => {
+  const args = ['install', '', 'a b', '&whoami', '%PATH%', '!', 'line\nbreak', 'a"b', '^', '|', '<', '>'];
+
+  const shim = [
+    '@ECHO off', 'GOTO start', ':find_dp0', 'SET dp0=%~dp0', 'EXIT /b',
+    ':start', 'SETLOCAL', 'CALL :find_dp0',
+    '"%dp0%\\node_modules\\pnpm\\pnpm.exe"   %*',
+  ].join('\r\n');
+
+  for (const directory of ['%dp0%\\', '%~dp0', '%basedir%\\']) {
+    assert.deepEqual(resolveShim('C:\\tools with spaces\\pnpm.cmd',
+      shim.replace('%dp0%\\node_modules', `${directory}node_modules`), args), {
+      file: 'C:\\tools with spaces\\node_modules\\pnpm\\pnpm.exe', args,
+    });
+  }
+
+  for (const content of [
+    shim.replace('pnpm.exe', 'arbitrary.exe'),
+    shim.replace('node_modules\\pnpm', 'node_modules\\other'),
+    shim.replace('pnpm.exe', '..\\pnpm.exe'),
+    shim.replace('   %*', ' dlx %*'),
+    shim.replace('   %*', ' %* & whoami'),
+  ]) {
+    assert.throws(() => resolveShim('C:\\tools\\pnpm.cmd', content, args), /Unsupported Windows launcher/);
+  }
+
+  assert.throws(() => resolveShim('C:\\tools\\other.cmd', shim, args), /Unsupported Windows launcher/);
+});
+
 test('Azure CLI shim invokes Python with an argument array', () => {
   assert.deepEqual(resolveShim('C:\\azure\\bin\\az.cmd', '"%~dp0..\\python.exe" -IBm azure.cli %*', ['account', '&']), {
     file: 'C:\\azure\\python.exe', args: ['-IBm', 'azure.cli', 'account', '&'],

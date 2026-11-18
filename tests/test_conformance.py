@@ -642,6 +642,24 @@ class ConformanceTests(unittest.TestCase):
                 f'@echo off\r\n"%dp0%\\node.exe" "%dp0%\\node_modules\\corepack\\dist\\{manager}.js" %*\r\n')
             for shell in SHELLS:
                 self.check(shell, manager, args, True)
+        native = self.bin / "node_modules/pnpm/pnpm.exe"
+        native.parent.mkdir(parents=True)
+        shutil.copy2(FIXTURE, native)
+        (self.bin / "pnpm.cmd").write_text(
+            '@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n'
+            ':start\r\nSETLOCAL\r\nCALL :find_dp0\r\n'
+            '"%dp0%\\node_modules\\pnpm\\pnpm.exe"   %*\r\n')
+        for shell in SHELLS:
+            for manager in ("pnpm", "pn"):
+                with self.subTest(shell=shell, manager=manager, launcher="native pnpm"):
+                    self.check(shell, manager, args, True)
+                    result, calls = self.invoke(shell, manager, args,
+                        {"TEST_IO": "yes", "TEST_MANAGER_STATUS": "37"}, stdin="stdin payload\n")
+                    self.assertEqual(result.returncode, 37, result.stderr)
+                    self.assertEqual(result.stdout, "manager stdout\nstdin payload\n")
+                    self.assertEqual(result.stderr, "manager stderr\n")
+                    self.assertEqual(calls[-1]["args"], args)
+                    self.assertEqual(calls[-1]["env"]["ARTIFACTS_ACCESSTOKEN"], "fixture-token")
         (self.bin / "az.exe").unlink()
         azure = self.bin / "azure"
         azure.mkdir()

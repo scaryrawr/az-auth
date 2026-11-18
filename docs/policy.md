@@ -23,6 +23,7 @@ The shell adapters resolve `functions/az-auth-core.cjs` relative to their own fi
 The Unix `bin/az-auth-core` launcher invokes the same module.
 Windows native executables run directly.
 Known Node package-manager `.cmd` shims and Azure CLI's Python `az.cmd` are resolved to their entrypoints.
+pnpm's native `.cmd` shim targeting `node_modules\pnpm\pnpm.exe` runs that executable directly, without `cmd.exe`.
 Unknown batch and PowerShell launchers fail instead of concatenating arguments into a command string.
 
 The policy uses the invocation's manager, arguments, working directory, and environment.
