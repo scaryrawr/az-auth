@@ -52,7 +52,7 @@ The independently specified regression matrix in `tests/test_wrappers.py` lists 
 | --- | --- |
 | `npm` | `install`, `ci`, `update`, `outdated`, `audit`, `view`, `search`, `ping`, `whoami`, `publish`, `unpublish`, `access`, `dist-tag`, `dist-tags`, `owner`, `stars`, `star`, and `unstar`. |
 | `pnpm` and `pn` | `install`, `add`, `update`, `remove`, `outdated`, `audit`, `view`, `search`, `ping`, `whoami`, `publish`, `unpublish`, `dist-tag`, `owner`, `fetch`, `patch`, `import`, `store add`, and `dlx`. Recursive and filtered commands use the delegated action. |
-| `yarn` | `install`, `add`, `up`, `upgrade`, `upgrade-interactive`, `remove`, `outdated`, `audit`, `info`, `publish`, `tag`, `owner`, and `dlx`. Its `npm` actions include `audit`, `info`, `publish`, `whoami`, `login`, `logout`, and `tag`. `workspace` and `workspaces foreach` use the delegated action. |
+| `yarn` | `install`, `fast`, `add`, `up`, `upgrade`, `upgrade-interactive`, `remove`, `outdated`, `audit`, `info`, `publish`, `tag`, `owner`, and `dlx`. Its `npm` actions include `audit`, `info`, `publish`, `whoami`, `login`, `logout`, and `tag`. `workspace` and `workspaces foreach` use the delegated action. |
 | `bun` | `install`, `add`, `update`, `remove`, `publish`, `outdated`, and `x`. |
 | `npx` and `pnpx` | Package execution can download a package. `npx --no-install`, `npx --no`, and `npx --yes=false` skip authentication. `bun x --no-install` also skips it. |
 | `corepack` | Delegated `npm`, `npx`, `pnpm`, `pnpx`, and `yarn` commands use the delegated manager's policy, including version-qualified names. Maintenance commands skip authentication. |
@@ -61,7 +61,7 @@ With no action, `pnpm`, `pn`, and `yarn` use the install policy.
 Bare `npm`, `bun`, `npx`, `pnpx`, and `corepack` do not fetch a token.
 Option-only `npx` and `pnpx` invocations also skip authentication unless they explicitly request a package with `--package` or `-p`.
 Local `run`, `build`, `test`, `exec`, help, version, configuration, maintenance, and unknown actions do not fetch a token.
-For example, `npm run install` is local.
+For example, `npm run install` and `yarn run fast` are local.
 
 Common separate-value options include `--cwd`, `-C`, `--prefix`, `--filter`, `-F`, `--registry`, `--userconfig`, and `--globalconfig`.
 `--option=value` and boolean flags are accepted.

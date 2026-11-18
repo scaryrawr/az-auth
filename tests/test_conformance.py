@@ -216,6 +216,19 @@ class ConformanceTests(unittest.TestCase):
                 self.check(shell, "bun", ["x", "--no-install", "tool"], False)
                 (self.project / ".npmrc").unlink()
 
+    def test_yarn_fast_auth(self):
+        self.auth(registry=False)
+        yarnrc = self.project / ".yarnrc.yml"
+        for shell in SHELLS:
+            with self.subTest(shell=shell):
+                yarnrc.write_text('npmRegistryServer: "https://registry.yarnpkg.com/"\n')
+                self.check(shell, "yarn", ["fast"], False)
+                yarnrc.write_text('npmRegistryServer: "https://private.invalid/feed/"\n')
+                self.check(shell, "yarn", ["fast"], True)
+                self.check(shell, "corepack", ["yarn", "fast"], True)
+                self.check(shell, "yarn", ["fast", "--help"], False)
+                self.check(shell, "yarn", ["run", "fast"], False)
+
     def test_yarn_registry_scheme_matching(self):
         (self.home / ".npmrc").unlink()
         yarnrc = self.project / ".yarnrc.yml"

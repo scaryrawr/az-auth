@@ -118,7 +118,7 @@ class WrapperTests(unittest.TestCase):
         groups = {
             "npm": "install i in ins inst insta instal add isnt isntall ci clean-install ic install-clean update up upgrade udpate outdated audit view info show v search s se find ping whoami publish unpublish access dist-tag owner stars star unstar",
             "pnpm": "install i add update up upgrade remove rm uninstall un outdated audit view info show search ping whoami publish unpublish dist-tag owner fetch patch import",
-            "yarn": "install i add up upgrade upgrade-interactive remove outdated audit info publish tag owner",
+            "yarn": "install i fast add up upgrade upgrade-interactive remove outdated audit info publish tag owner",
             "bun": "install i add a update remove rm uninstall publish outdated",
         }
         for manager, actions in groups.items():
